@@ -1,26 +1,196 @@
-# DevEx Engineer Technical Challenge
+# Heimdall - Wormhole Configuration CLI
 
-> [!NOTE]  
-> This codebase uses [yargs](https://www.npmjs.com/package/yargs). There is thorough documentation for this package, as well as detailed examples of how to use it [here](https://github.com/yargs/yargs/blob/HEAD/docs/examples.md).
-> Our goal is NOT to make you stuck in dependency hell. Please ask us any questions. If there is a different library or method you prefer for building CLI tools, feel free to use that instead.
+A command-line tool that helps you set up configuration files for deploying tokens across multiple blockchain networks using Wormhole.
 
-**Summary:** Build a CLI tool that outputs, and allows modifying, a config file for multichain deployments. The CLI tool should output a `wormhole.config.json` file with proper structure and validation. The CLI should be well documented and provide the right combination of commands and options that results in the best possible developer experience.
+## What does this do?
 
-**Feature Requirements:**
+Before deploying your token to multiple blockchains (Ethereum, Base, Solana, etc.), you need to configure settings for each chain. This tool creates a `wormhole.config.json` file with all your deployment settings in the correct format.
 
-- **Multi-Environment Support:** The CLI tool should support setting configs across 3 environments — Mainnet, Testnet, and Devnet
-- **Multi-Chain Support:** The CLI tool should support setting options on Ethereum, Arbitrum, Optimism, Base, and Solana, with the ability to use custom RPC endpoints on each chain.
-- **Private Key Configuration:** The CLI tool should allow the user to specify the private key they want to use for the deployment on each chain.
-- **Token Contract Addresses:** The CLI tool should allow the user to specify the token contract address to be used on each chain. Each chain should only have 1 token address configured. These token addresses should be stored in the [Wormhole 32-byte address representation](https://wormhole.com/docs/products/reference/wormhole-formatted-addresses/).
-- **Burning/Locking Modes:** On each chain, the deployment mode can be either BURNING or LOCKING. There are 2 kinds of configurations:
-    - BURNING mode on all chains.
-    - LOCKING mode on only 1 chain, BURNING mode on all other chains.
+**Important:** This tool only generates a config file. It does NOT deploy anything to the blockchain.
 
-> [!IMPORTANT]  
-> Remember, the tool should just output a config file. The tool should not interact with the blockchain to perform any on-chain transactions.
-> Imagine that this tool will be used by a developer to set all of their configuration options **before** pushing anything on-chain.
+## Installation
 
-**Documentation & DevEx:**
+```bash
+npm install
+npm link
+```
 
-- **Documentation:** The CLI should be well documented, with a description of what it is and instructions on how to run it. A developer who is completely new to Wormhole, with a fresh environment, should be able to understand what the tool does and successfully follow the instructions to use it.
-- **DevEx Enhancements:** Now that you have a working CLI, put yourself in the shoes of someone who might be using it. What other features, commands, or option flags would provide the best user experience? Are your commands structured in a way that would make sense to a completely new user? Think back to other great CLI tools you may have used in the past and use your best judgement.
+## Quick Start
+
+Run the interactive setup:
+
+```bash
+heimdall init
+```
+
+Follow the prompts to:
+
+1. Choose your network (testnet recommended for first-time users)
+2. Select which blockchains you want to use
+3. Configure each blockchain's settings
+
+The tool will create `wormhole.config.json` with your configuration.
+
+## Basic Commands
+
+### Initialize Configuration (Interactive)
+
+```bash
+heimdall init
+```
+
+The easiest way to get started. The tool will ask you questions and guide you through the setup.
+
+### Initialize Configuration (Non-Interactive)
+
+```bash
+heimdall init testnet \
+  --chain base \
+  --base-token 0x1234567890123456789012345678901234567890 \
+  --base-key BASE_PRIVATE_KEY \
+  --base-mode locking \
+  --chain solana \
+  --solana-token DYw8jCTfwHNRJhhmFcbXvVDTqWMEVFBX6ZKUmG5CNSKQ \
+  --solana-key SOLANA_PRIVATE_KEY \
+  --solana-mode burning
+```
+
+Useful for scripts and automation.
+
+### View Current Configuration
+
+```bash
+heimdall show
+```
+
+### Validate Configuration
+
+```bash
+heimdall validate
+```
+
+Checks if your config file is correct.
+
+### Manage Chains
+
+```bash
+heimdall add ethereum      # Add a new chain
+heimdall remove ethereum   # Remove a chain
+```
+
+### Check Environment Variables
+
+```bash
+heimdall env-check
+```
+
+Verifies that all required environment variables are set.
+
+## Supported Blockchains
+
+- Ethereum
+- Arbitrum
+- Optimism
+- Base
+- Solana
+
+## Understanding Modes
+
+When deploying tokens across chains, each chain operates in one of two modes:
+
+**BURNING Mode:** Tokens are burned on the source chain and minted on the destination chain.
+
+**LOCKING Mode:** Tokens are locked on the source chain and unlocked on the destination chain.
+
+**Rule:** Only ONE chain can use LOCKING mode. All others must use BURNING mode.
+
+## Security Notice
+
+Your private keys are **never stored** in the config file. Instead, the tool uses environment variable references.
+
+After creating a config, you'll need to export your private keys:
+
+```bash
+export BASE_PRIVATE_KEY="your_private_key_here"
+export SOLANA_PRIVATE_KEY="your_private_key_here"
+```
+
+## Example Configuration
+
+After running `heimdall init`, your `wormhole.config.json` will look like:
+
+```json
+{
+  "network": "testnet",
+  "chains": {
+    "base": {
+      "rpc": "https://sepolia.base.org",
+      "privateKey": "${BASE_PRIVATE_KEY}",
+      "tokenAddress": "0x0000000000000000000000001234567890123456789012345678901234567890",
+      "mode": "locking"
+    },
+    "solana": {
+      "rpc": "https://api.testnet.solana.com",
+      "privateKey": "${SOLANA_PRIVATE_KEY}",
+      "tokenAddress": "DYw8jCTfwHNRJhhmFcbXvVDTqWMEVFBX6ZKUmG5CNSKQ",
+      "mode": "burning"
+    }
+  }
+}
+```
+
+Notice:
+
+- **Token addresses** are automatically converted to Wormhole's 32-byte format
+- **Private keys** are stored as environment variable references (`${VAR_NAME}`)
+- **Each chain** has its RPC endpoint, token address, and deployment mode
+
+## Help
+
+View all available commands:
+
+```bash
+heimdall --help
+```
+
+View help for a specific command:
+
+```bash
+heimdall init --help
+```
+
+## Common Issues
+
+**"Config file already exists"**  
+Use `--force` to overwrite: `heimdall init --force`
+
+**"Only ONE chain can use LOCKING mode"**  
+Make sure only one chain has LOCKING mode, all others should use BURNING.
+
+**"Invalid address format"**
+
+- Ethereum addresses: Must start with `0x` and have 40 hex characters  
+  Example: `0x1234567890123456789012345678901234567890`
+- Solana addresses: Base58 format, 32-44 characters  
+  Example: `DYw8jCTfwHNRJhhmFcbXvVDTqWMEVFBX6ZKUmG5CNSKQ`
+
+## What Happens to My Addresses?
+
+Ethereum-based addresses (20 bytes) are automatically converted to Wormhole's 32-byte format by padding with zeros:
+
+- **Input:** `0x1234567890123456789012345678901234567890`
+- **Output:** `0x0000000000000000000000001234567890123456789012345678901234567890`
+
+Solana addresses are already 32 bytes and don't need conversion.
+
+## Next Steps
+
+After creating your config file:
+
+1. ✅ Run `heimdall validate` to verify your configuration
+2. ✅ Run `heimdall env-check` to ensure environment variables are set
+3. ✅ Use the `wormhole.config.json` file for your deployment process
+
+---
+
+Built with [yargs](https://www.npmjs.com/package/yargs), [inquirer](https://www.npmjs.com/package/inquirer), and [chalk](https://www.npmjs.com/package/chalk).

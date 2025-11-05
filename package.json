@@ -1,14 +1,19 @@
 {
-  "name": "devex-challenge-starter",
+  "name": "wormhole-config-cli",
   "version": "1.0.0",
   "main": "index.js",
+  "bin": {
+    "heimdall": "./index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "CLI tool for generating Wormhole multichain deployment configurations",
   "dependencies": {
-    "yargs": "^18.0.0"
+    "yargs": "^18.0.0",
+    "inquirer": "^8.2.5",
+    "chalk": "^4.1.2"
   }
 }
