@@ -282,27 +282,6 @@ heimdall init testnet --chain base ... --force
 
 ---
 
-## Security Model
-
-🔒 **Why export private keys before running Heimdall?**
-
-This approach ensures:
-
-- ✅ Private keys **never appear** in terminal output or logs
-- ✅ No risk of accidental copy-paste or screenshots exposing keys
-- ✅ Keys stay in environment variables, following industry best practices
-- ✅ Config files are safe to commit to version control
-
-To make your environment variables permanent, add them to your shell config (`~/.bashrc`, `~/.zshrc`, etc.):
-
-```bash
-# Add to ~/.zshrc or ~/.bashrc
-export BASE_PRIVATE_KEY="your_key_here"
-export SOLANA_PRIVATE_KEY="your_key_here"
-```
-
----
-
 ## Understanding Your Configuration
 
 After running `heimdall init`, your `wormhole.config.json` will look like this:
